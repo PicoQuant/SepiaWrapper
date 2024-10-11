@@ -5,7 +5,7 @@
 **Organization:** PicoQuant GmbH, Berlin, Germany
 **Version:** 2024.0.1
 
-Python Package
+Python Package to control Sepia2 laser devices.
 
 ## Dependencies
 
