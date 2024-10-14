@@ -168,7 +168,7 @@ def close_device(device_index):
 
     '''
     status = Sepia2_Lib.SEPIA2_USB_CloseDevice(device_index)
-    return status  
+    return status
             
         
         
