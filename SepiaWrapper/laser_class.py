@@ -10,6 +10,12 @@ from .library import decode_error
 from .slm import get_intensity_fine_step, set_intensity_fine_step, get_pulse_parameters, set_pulse_parameters
 from .slm import decode_head_type, decode_freq_trigger_mode
 
+class SepiaLibError(Exception):
+    pass
+
+class SepiaWrapperError(Exception):
+    pass
+
 class laser:
     def check_error(self):
         '''
@@ -17,20 +23,22 @@ class laser:
         
         Returns
         -------
-        bool
+        none
         
         '''
         if self.status != 0:
-            return True   
-        else:
-            return False
+            # decode error message
+            self.status, error = decode_error(self.status)
+            if self.status == 0:
+                raise SepiaLibError(error)
+            else:
+                self.status, error = decode_error(self.status)
+                raise SepiaLibError(error)
         
     def __init__(self, device_index, slot_id, module_type):
         '''
         
-        Initiate the class. Connects to the laser driver with the USB index
-        deviceidx. Gets the module map and soft-locks the laser. Laser
-        will be unlocked by unlock_lasers and start_lasers_simple.
+        Initiate the class.
         
         Parameters
         ----------
@@ -45,7 +53,6 @@ class laser:
         '''
         self.device_index = device_index
         self.status = 0
-        self.error = 'No Error'
         self.slot_id = slot_id
         self.module_type = module_type
         return
@@ -61,13 +68,13 @@ class laser:
 
         Returns
         -------
-        status : INT
-            0 if successful, otherwise errorcode
+        none
 
         '''
         if self.module_type == 'SLM':
             self.status = set_intensity_fine_step(self.device_index, self.slot_id, round(intensity*10))
-        return self.status
+            self.check_error()
+        return
     
     def set_pulse_parameters(self, trigger, pulsed):
         '''
@@ -83,13 +90,13 @@ class laser:
 
         Returns
         -------
-        status : INT
-            0 if successful, otherwise errorcode.
-
+        none
+        
         '''
         if self.module_type == 'SLM':
             self.status = set_pulse_parameters(self.device_index, self.slot_id, trigger, pulsed)
-        return self.status
+            self.check_error()
+        return
         
     def get_current_status(self, verbose=True):
         '''
@@ -112,26 +119,22 @@ class laser:
                'slot_id': self.slot_id}
         if self.module_type == 'SLM':
             self.status, trigger, pulsed, head_type = get_pulse_parameters(self.device_index, self.slot_id)
-            if self.check_error():
-                return self.status, None
+            self.check_error()
             out['trigger'] = trigger
             out['pulsed'] = pulsed
             self.status, head_type = decode_head_type(head_type)
             out['head_type'] = head_type
-            if self.check_error():
-                return self.status, None
+            self.check_error()
             self.status, trigger_mode = decode_freq_trigger_mode(trigger)
             out['trigger_mode'] = trigger_mode
-            if self.check_error():
-                return self.status, None
+            self.check_error()
             self.status, intensity = get_intensity_fine_step(self.device_index, self.slot_id)
             out['intensity'] = intensity/10
-            if self.check_error():
-                return self.status, None
+            self.check_error()
         if verbose:
             for k in out.keys():
                 print(k, out[k])
-        return self.status, out
+        return out
             
             
             

@@ -13,6 +13,12 @@ from .som_somd import get_delay_units, get_seq_output_infos, set_seq_output_info
 from .som_somd import get_burst_length_array, set_burst_length_array
 from .som_somd import get_sequencer_control, set_sequencer_control, decode_sequencer_auxin_control
 
+class SepiaLibError(Exception):
+    pass
+
+class SepiaWrapperError(Exception):
+    pass
+
 class oscillator:
     def check_error(self):
         '''
@@ -20,13 +26,17 @@ class oscillator:
         
         Returns
         -------
-        bool
+        none
         
         '''
         if self.status != 0:
-            return True   
-        else:
-            return False
+            # decode error message
+            self.status, error = decode_error(self.status)
+            if self.status == 0:
+                raise SepiaLibError(error)
+            else:
+                self.status, error = decode_error(self.status)
+                raise SepiaLibError(error)
         
     def __init__(self, device_index, slot_id, module_type):
         '''        
@@ -37,17 +47,15 @@ class oscillator:
 
         Returns
         -------
-        status : INT
-            0 if successful, otherwise errorcode
+        none
 
         '''
         self.device_index = device_index
         self.status = 0
-        self.error = 'No Error'
         self.slot_id = slot_id
         self.module_type = module_type
         self.status = self.set_sequencer(False, 0)
-        return self.status
+        return
     
     def set_output(self, output, sync=None, sync_invert=None):
         '''
@@ -57,7 +65,7 @@ class oscillator:
         Parameters
         ----------
         output : INT or TUPLE
-            Which lasers to turn on 
+            Which lasers to turn on, if None will disable all lasers
         str_sync : INT or TUPLE, optional
             For which lasers to enable sync. If None the sync pattern will be left unchanged. default is None.
         sync_inverse : BOOL, optional
@@ -65,15 +73,13 @@ class oscillator:
 
         Returns
         -------
-        status : INT
-            0 if successful, otherwise errorcode
+        none
 
         '''
         self.status, _, sync_before, invert_before = get_out_and_sync_enable(self.device_index,
                                                                              self.slot_id,
                                                                              self.module_type)
-        if self.check_error():
-            return self.status
+        self.check_error()
         # Generate output bitstring
         output_array = [0]*8
         if type(output) is int:
@@ -99,9 +105,8 @@ class oscillator:
             sync_invert = invert_before
         self.status = set_out_and_sync_enable(self.device_index, self.slot_id, self.module_type,
                                               output_bitstring, sync_bitstring, sync_invert)
-        if self.check_error():
-            return self.status
-        return self.status
+        self.check_error()
+        return
     
     def set_clock_internal(self, target_frequency):
         '''
@@ -130,12 +135,12 @@ class oscillator:
         actual_frequency = 80/divider
         # Set to internal Trigger 80MHz
         self.status = set_freq_trigger_mode(self.device_index, self.slot_id, self.module_type, 2)
-        if self.check_error():
-            return self.status, None
+        self.check_error()
         # set divider
         self.status = set_burst_values(self.device_index, self.slot_id, self.module_type,
                                        divider, 0, 0)
-        return self.status, actual_frequency
+        self.check_error()
+        return actual_frequency
         
     def set_sequencer(self, aux_out, aux_in):
         '''
@@ -150,12 +155,12 @@ class oscillator:
 
         Returns
         -------
-        status : INT
-            0 if successful, otherwise errorcode
+        none
 
         '''
         self.status = set_sequencer_control(self.device_index, self.slot_id, self.module_type, aux_out, aux_in)
-        return self.status
+        self.check_error()
+        return
     
     def set_delay(self, laser, delay_coarse, delay_fine):
         '''
@@ -173,8 +178,6 @@ class oscillator:
 
         Returns
         -------
-        status : INT
-            0 if successful, otherwise errorcode
         delay_coarse : FLOAT
             Coarse delay set for this laser after function call
         delay_fine : INT
@@ -183,8 +186,7 @@ class oscillator:
         '''
         self.status, coarse_step, fine_delay_max = get_delay_units(self.device_index, 
                                                                    self.slot_id)
-        if self.check_error():
-            return self.status, None, None
+        self.check_error()
         coarse_step = 1e9 * coarse_step
         target_coarse = coarse_step * (delay_coarse // coarse_step)
         if delay_fine > fine_delay_max:
@@ -192,12 +194,10 @@ class oscillator:
         self.status = set_seq_output_infos(self.device_index, self.slot_id, laser,
                                            True, '00000001', False,
                                            target_coarse, delay_fine)
-        if self.check_error():
-            return self.status, None, None
+        self.check_error()
         self.status, _, _, _, _, delay_coarse, delay_fine = get_seq_output_infos(self.device_index, self.slot_id, laser)
-        if self.check_error():
-            return self.status, None, None
-        return self.status, delay_coarse, delay_fine
+        self.check_error()
+        return delay_coarse, delay_fine
         
     def set_burst_array(self, burst_values):
         '''
@@ -210,14 +210,13 @@ class oscillator:
 
         Returns
         -------
-        status : INT
-            0 if successful, otherwise errorcode
+        none
 
         '''
         self.status = set_burst_length_array(self.device_index, self.slot_id, self.module_type,
                                              burst_values)
         self.check_error()
-        return self.status
+        return
     
     def set_combiner(self, laser, combination, masked):
         '''
@@ -234,14 +233,12 @@ class oscillator:
 
         Returns
         -------
-        status : INT
-            0 if successful, otherwise errorcode
+        none
 
         '''
         # get delays to leave them unchanged
         self.status, _, _, _, _, delay_coarse, delay_fine = get_seq_output_infos(self.device_index, self.slot_id, laser)
-        if self.check_error():
-            return self.status
+        self.check_error()
         # Generate combination bitstring
         comb_array = [0]*8
         if type(combination) is int:
@@ -252,7 +249,8 @@ class oscillator:
         comb_bitstring = ''.join(map(str, comb_array[::-1]))
         # set sequencer info
         self.status = set_seq_output_infos(self.device_index, self.slot_id, laser, False, comb_bitstring, masked, delay_coarse, delay_fine)
-        return self.status
+        self.check_error()
+        return
         
     
     def get_current_status(self, verbose=True):
@@ -266,8 +264,6 @@ class oscillator:
 
         Returns
         -------
-        status : INT
-            0 if successful, otherwise errorcode.
         out : DICT
             Current oscillator parameters
 
@@ -275,16 +271,13 @@ class oscillator:
         out = {'module_type': self.module_type,
                'slot_id': self.slot_id}
         self.status, trigger_mode, sync_now = get_freq_trigger_mode(self.device_index, self.slot_id, self.module_type)
-        if self.check_error():
-            return self.status, None
+        self.check_error()
         self.status, trigger_mode_str = decode_freq_trigger_mode(self.device_index, self.slot_id, self.module_type, trigger_mode)
-        if self.check_error():
-            return self.status, None
+        self.check_error()
         # Trigger Mode
         out['trigger_mode'] = trigger_mode_str
         self.status, divider, presync, mask_sync = get_burst_values(self.device_index, self.slot_id, self.module_type)
-        if self.check_error():
-            return self.status, None
+        self.check_error()
         out['divider'] = divider
         if trigger_mode == 2:
             out['clock frequency'] = 80/divider
@@ -292,31 +285,26 @@ class oscillator:
         out['mask_sync'] = mask_sync
         # Burst Array
         self.status, burst_array = get_burst_length_array(self.device_index, self.slot_id, self.module_type)
-        if self.check_error():
-            return self.status, None
+        self.check_error()
         out['burst_array'] = burst_array
         # Out and Sync
         self.status, output, sync, sync_invert = get_out_and_sync_enable(self.device_index, self.slot_id, self.module_type)
-        if self.check_error():
-            return self.status, None
+        self.check_error()
         out['output_enabled'] = [I for I in range(len(output)) if int(output[::-1][I])]
         out['sync_enabled'] = [I for I in range(len(sync)) if int(sync[::-1][I])]
         out['sync_mask_inverted'] = sync_invert
         # Sequencer Control
         self.status, auxin, auxout = get_sequencer_control(self.device_index, self.slot_id, self.module_type)
-        if self.check_error():
-            return self.status, None
+        self.check_error()
         self.status, auxin_str = decode_sequencer_auxin_control(auxin, self.module_type)
-        if self.check_error():
-            return self.status, None
+        self.check_error()
         out['sequencer'] = auxin_str
         out['sequencer_AuxOut'] = auxout
         # Sequencer Info
         if self.module_type == 'SOMD':
             for chan in range(8):
                 self.status, delayed, force_undelayed, out_combi, masked_combi, delay_coarse, delay_fine = get_seq_output_infos(self.device_index, self.slot_id, chan)
-                if self.check_error():
-                    return self.status, None
+                self.check_error()
                 if delayed and not force_undelayed:
                     out['Channel_'+str(chan)] = 'delayed {:.2f} ns and {:d} a.u.'.format(delay_coarse, delay_fine)
                 else:
@@ -325,7 +313,7 @@ class oscillator:
         if verbose:
             for k in out.keys():
                 print(k, out[k])
-        return self.status, out 
+        return out 
             
         
         

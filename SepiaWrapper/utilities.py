@@ -28,7 +28,10 @@ def list_devices(verbose=True):
             devices['index'].append(I)
             devices['product_model'].append(model)
             devices['serial_number'].append(snr)
-            print('Device {:d}: {:s}, serial number {:s}'.format(I, model, snr))
+            if verbose:
+                print('Device {:d}: {:s}, serial number {:s}'.format(I, model, snr))
+    if len(devices['index']) == 0 and verbose:
+        print('No Sepia2 devices found')
     return devices
     
             
