@@ -1,4 +1,4 @@
-![logo](./logo.png)
+![logo](./logo.png) { width: 400px; }
 # SepiaWrapper
 ## Python control for PicoQuant Sepia PDL 828 laser drivers
 
