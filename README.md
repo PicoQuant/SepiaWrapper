@@ -1,3 +1,4 @@
+![[logo.png]]
 # SepiaWrapper
 ## Python control for PicoQuant Sepia PDL 828 laser drivers
 
