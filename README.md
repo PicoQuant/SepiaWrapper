@@ -8,6 +8,17 @@
 
 Python Package to control Sepia2 laser devices.
 
+## Disclaimer
+
+This repository contains experimental Python code that was originally developed for internal use. While we are making it publicly available, please be aware of the following:
+	1.	No Warranty: The code is provided “as is”, without any warranty of any kind, either express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement. Use it at your own risk.
+	2.	Experimental Nature: This code was primarily developed for internal research and experimentation. As such, it may not be fully optimized, thoroughly tested, or suitable for production environments. It is intended for use by developers who are comfortable working with experimental software.
+	3.	Limited Support: While we are open-sourcing this project, we do not guarantee active maintenance or support. Issues, bugs, and pull requests may be addressed as time permits, but there are no commitments regarding response times or future updates.
+	4.	Liability: We assume no responsibility for any damage or loss caused by the use of this code. You are solely responsible for ensuring that the software meets your requirements and complies with applicable laws and regulations.
+	5.	Contributions: We welcome contributions, but please be aware that any code you submit will be subject to the same disclaimer and license terms as the original project.
+
+By using this code, you acknowledge that you understand and agree to the above terms.
+
 ## Dependencies
 
 - **Python 3:**
@@ -67,9 +78,7 @@ sepia2.close()
 
 A more detailed example is available as a jupyter notebook explaining how to connect to a sepia2 device and control some parameters. You will need to install [jupyter](https://jupyter.org/) to run the example.
 
-## Disclaimer
 
-**Use the SepiaWrapper at your own risk. We are not responsible for any damages or losses resulting from the use of this software.**
 
 
 
