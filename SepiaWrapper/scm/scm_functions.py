@@ -7,6 +7,7 @@ Missing functions:
     int SEPIA2_SCM_GetPowerAndLaserLEDS(int iDevIdx, int iSlotId, out byte pbPowerLED, out byte pbLaserActiveLED);
 
 @author: Johan Hummert
+    additions by Tjorben Matthes
 """
 
 import ctypes as ct
@@ -92,6 +93,34 @@ def set_laser_softlocked(device_index, slot_id, locked):
     locked = ct.c_ubyte(locked)
     status = Sepia2_Lib.SEPIA2_SCM_SetLaserSoftLock(device_index, slot_id, locked)
     return status
+
+def get_power_and_laser_leds(device_index, slot_id):
+    """
+
+    Parameters
+    ----------
+    device_index : INT
+        device index.
+    slot_id : C_INT
+        Module slot id.
+
+    Returns
+    -------
+    status : INT
+        0 if successful, otherwise errorcode.
+    power_led : BOOL
+        True if active
+    laser_active_led : Bool
+        True if active
+
+    """
+    power_led = ct.c_ubyte()
+    laser_active_led = ct.c_ubyte()
+    status = Sepia2_Lib.SEPIA2_SCM_GetPowerAndLaserLEDS(device_index, slot_id, ct.byref(power_led),
+                                                        ct.byref(laser_active_led))
+    power_led = bool(power_led.value)
+    laser_active_led = bool(laser_active_led.value)
+    return status, power_led, laser_active_led
 
 
     

@@ -3,6 +3,7 @@
 Provides the sepia2 class for simpler control of PDL 828 driver devices
 
 @author: Johan Hummert
+    additions for prima lasers by Tjorben Matthes
 """
 
 from .library import decode_error
@@ -13,6 +14,7 @@ from .scm import set_laser_softlocked, get_laser_locked
 
 from .oscillator_class import oscillator
 from .laser_class import laser
+from .prima_class import Prima
 
 class SepiaLibError(Exception):
     pass
@@ -93,10 +95,14 @@ class sepia2:
                 self.safety = module
             elif module_type == 'SLM':
                 self.lasers.append(laser(self.device_index, slot_id, module_type))
+            elif module_type == 'PRI':
+                self.lasers.append(Prima(self.device_index, slot_id, module_type))
+            else:
+                raise SepiaLibError(module_type)
         if verbose:
             # Print some sort of welcome message
             print('Connected to {:s}, SNR {:s}'.format(self.productmodel, self.serialnumber))
-            if oscillator is not None:
+            if self.oscillator is not None:
                 print('{:s} oscillator module'.format(self.oscillator.module_type))
             for I in range(len(self.lasers)):
                 print('Laser Module {:d}: {:s}'.format(I, self.lasers[I].module_type))
