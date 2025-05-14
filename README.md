@@ -60,6 +60,8 @@ sepia2.close()
 	With SOM and SOMD oscillators most functions for internal triggering of the oscillator are included. You can set burst values, use the combiner, delay lasers for SOMD oscillators
 - **Sepia laser modules (SLM)**
 	Setting of pulse parameters and intensity
+- **Prima functions**
+	Setting of pulse parameters and intensity (thanks to Yava2023)
 
 ### What is not included
 
@@ -69,7 +71,6 @@ sepia2.close()
 - **VCL functions**
 - **Solea functions**
 - **VisUV/IR functions**
-- **Prima functions**
 - **Linux Support**
 	Most of this might work under wine, but none of it was tested under wine
 - **Most hardware diagnostics, such as voltages and temperatures**
