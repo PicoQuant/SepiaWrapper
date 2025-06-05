@@ -66,6 +66,7 @@ class Prima:
         self.status = 0
         self.slot_id = slot_id
         self.module_type = module_type
+        self.wl_idx = 99 # needed for intensity function
         return
 
     def set_intensity(self, intensity):
@@ -82,7 +83,8 @@ class Prima:
         none
 
         """
-        self.status = set_intensity(self.device_index, self.slot_id, round(intensity * 10))
+        status, self.wl_idx = get_wavelength_idx(self.device_index, self.slot_id)
+        self.status = set_intensity(self.device_index, self.slot_id, self.wl_idx, round(intensity * 10))
         self.check_error()
         return
 
@@ -240,15 +242,15 @@ class Prima:
         out['Gate high impedance'] = high_impedance
 
         # Get wavelength index
-        self.status, wl_idx = get_wavelength_idx(self.device_index, self.slot_id)
+        self.status, self.wl_idx = get_wavelength_idx(self.device_index, self.slot_id)
         self.check_error()
-        self.status, wavelength = decode_wavelength(self.device_index, self.slot_id, wl_idx)
+        self.status, wavelength = decode_wavelength(self.device_index, self.slot_id, self.wl_idx)
         self.check_error()
         out['Current Wavelength'] = wavelength
-        out['Current wavelength index'] = wl_idx
+        out['Current wavelength index'] = self.wl_idx
 
         # Get intensity
-        self.status, intensity = get_intensity(self.device_index, self.slot_id, wl_idx)
+        self.status, intensity = get_intensity(self.device_index, self.slot_id, self.wl_idx)
         self.check_error()
         out['Intensity'] = intensity
 
